@@ -129,9 +129,17 @@ export default function StartupDetailPage() {
         {/* Header */}
         <div className="glass-card p-8 mb-6">
           <div className="flex flex-col md:flex-row gap-6 items-start">
-            <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-indigo-500 to-pink-500 flex items-center justify-center text-white text-3xl font-bold flex-shrink-0">
-              {startup.logo || startup.name.charAt(0)}
-            </div>
+            {startup.logo ? (
+              <img
+                src={startup.logo}
+                alt={startup.name}
+                className="w-20 h-20 rounded-2xl object-cover flex-shrink-0"
+              />
+            ) : (
+              <div className="w-20 h-20 rounded-2xl bg-gradient-to-br from-indigo-500 to-pink-500 flex items-center justify-center text-white text-3xl font-bold flex-shrink-0">
+                {startup.name.charAt(0)}
+              </div>
+            )}
             <div className="flex-1">
               <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-3">
                 <h1 className="text-3xl font-bold text-slate-900 dark:text-white">

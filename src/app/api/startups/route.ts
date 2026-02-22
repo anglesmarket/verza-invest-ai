@@ -19,9 +19,23 @@ export async function GET(req: NextRequest) {
     const featured = searchParams.get("featured") === "true";
     const limit = parseInt(searchParams.get("limit") || "50");
     const status = searchParams.get("status") || "approved";
+    const viewAll = searchParams.get("viewAll") === "true";
 
     // Build query
     const query: any = { status };
+
+    // Admin "View All" mode: show all startups regardless of status
+    if (viewAll) {
+      const session = await getServerSession(authOptions);
+      if (!session?.user) {
+        return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      }
+      const roles = (session.user as any).roles || [];
+      if (!roles.includes("admin")) {
+        return NextResponse.json({ error: "Admin access required" }, { status: 403 });
+      }
+      delete query.status; // admin sees all statuses
+    }
 
     // If owner=me, get current user's startups regardless of status
     if (owner === "me") {
