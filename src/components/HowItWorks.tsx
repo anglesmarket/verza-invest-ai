@@ -2,6 +2,7 @@
 
 import { Search, UserPlus, Wallet, TrendingUp, LucideIcon } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 import SectionHeading from "./SectionHeading";
 
 interface StepProps {
@@ -45,6 +46,7 @@ function Step({ number, icon: Icon, title, description, delay }: StepProps) {
 
 export default function HowItWorks() {
   const router = useRouter();
+  const { data: session } = useSession();
   const steps = [
     {
       icon: UserPlus,
@@ -102,9 +104,11 @@ export default function HowItWorks() {
                 Join thousands of investors supporting innovative startups
               </p>
             </div>
-            <button onClick={() => router.push("/auth/register")} className="btn-primary whitespace-nowrap">
-              Get Started Now
-            </button>
+            {!session && (
+              <button onClick={() => router.push("/auth/register")} className="btn-primary whitespace-nowrap">
+                Get Started Now
+              </button>
+            )}
           </div>
         </div>
       </div>

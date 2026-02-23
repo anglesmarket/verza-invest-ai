@@ -2,9 +2,11 @@
 
 import { Rocket, TrendingUp, Users, ArrowRight } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useSession } from "next-auth/react";
 
 export default function Hero() {
   const router = useRouter();
+  const { data: session } = useSession();
 
   return (
     <section
@@ -43,13 +45,15 @@ export default function Hero() {
 
           {/* CTAs */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 mb-16 animate-slide-up">
-            <button
-              onClick={() => router.push("/auth/register")}
-              className="btn-primary group"
-            >
-              <span>Get Started</span>
-              <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
-            </button>
+            {!session && (
+              <button
+                onClick={() => router.push("/auth/register")}
+                className="btn-primary group"
+              >
+                <span>Get Started</span>
+                <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />
+              </button>
+            )}
             <button
               onClick={() => document.getElementById("startups")?.scrollIntoView({ behavior: "smooth" })}
               className="btn-secondary"
