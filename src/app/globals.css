@@ -82,10 +82,17 @@
   }
 
   .input-field {
-    @apply w-full px-4 py-3 bg-white/5 dark:bg-white/5 border border-gray-300 dark:border-gray-700
+    @apply w-full px-4 py-3 bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100
+           border border-gray-300 dark:border-gray-700
            rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-pink-500
            focus:border-transparent transition-all duration-300
            placeholder:text-gray-400 dark:placeholder:text-gray-500;
+  }
+
+  /* Ensure native <option> elements are readable in all themes */
+  select.input-field option,
+  select option {
+    @apply bg-white text-gray-900 dark:bg-gray-800 dark:text-gray-100;
   }
 
   .card-startup {

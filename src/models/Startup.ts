@@ -93,6 +93,12 @@ const StartupSchema = new Schema({
     ref: "User",
   },
   rejectionReason: String,
+  moderation: {
+    score: { type: Number, default: null },
+    flags: [String],
+    reason: String,
+    moderatedAt: Date,
+  },
 }, {
   timestamps: true,
 });

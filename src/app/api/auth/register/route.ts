@@ -29,7 +29,7 @@ export async function POST(req: Request) {
       name,
       email,
       password: hashedPassword,
-      roles: ["investor"],
+      roles: ["investor", "entrepreneur"],
     });
 
     return NextResponse.json({

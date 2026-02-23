@@ -4,6 +4,7 @@ import Startup from "@/models/Startup";
 import Investment from "@/models/Investment";
 import { getServerSession } from "next-auth";
 import { authOptions } from "@/lib/authConfig";
+import { moderateStartupContent } from "@/lib/moderation";
 
 export const dynamic = "force-dynamic";
 
@@ -130,9 +131,31 @@ export async function POST(req: NextRequest) {
     await connectDB();
     const body = await req.json();
 
+    // Run Gemini AI moderation on the content
+    const moderation = await moderateStartupContent({
+      name: body.name || "",
+      tagline: body.tagline || "",
+      problem: body.problem,
+      solution: body.solution,
+      valueProposition: body.valueProposition,
+      businessModel: body.businessModel,
+      industry: body.industry,
+    });
+
+    // Determine initial status based on moderation
+    // score >= 81: auto-approve (clean content)
+    // score 61-80: pending (minor issues, needs review)
+    // score < 61: rejected (inappropriate content)
+    let initialStatus = "pending";
+    if (moderation.score >= 81) {
+      initialStatus = "approved";
+    } else if (moderation.score < 61) {
+      initialStatus = "rejected";
+    }
+
     const startup = await Startup.create({
       owner: user.id,
-      status: "pending",
+      status: initialStatus,
       basicInfo: {
         name: { en: body.name, fa: body.nameFa || "" },
         tagline: { en: body.tagline, fa: body.taglineFa || "" },
@@ -157,9 +180,28 @@ export async function POST(req: NextRequest) {
         stage: body.stage || "seed",
         minimumInvestment: body.minimumInvestment || 1000,
       },
+      moderation: {
+        score: moderation.score,
+        flags: moderation.flags,
+        reason: moderation.reason,
+        moderatedAt: new Date(),
+      },
+      ...(initialStatus === "rejected" ? { rejectionReason: moderation.reason } : {}),
+      ...(initialStatus === "approved" ? { approvedAt: new Date() } : {}),
     });
 
-    return NextResponse.json({ startup, message: "Startup created" }, { status: 201 });
+    return NextResponse.json({
+      startup,
+      message: initialStatus === "approved"
+        ? "Startup created and auto-approved!"
+        : initialStatus === "rejected"
+        ? "Startup flagged by moderation: " + moderation.reason
+        : "Startup created and pending review",
+      moderation: {
+        score: moderation.score,
+        status: initialStatus,
+      },
+    }, { status: 201 });
   } catch (error: any) {
     console.error("Error creating startup:", error);
     return NextResponse.json({ error: "Failed to create startup" }, { status: 500 });

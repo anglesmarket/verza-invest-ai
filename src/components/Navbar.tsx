@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import ThemeToggle from "./ThemeToggle";
-import { Menu, X, LogIn, User, LogOut, Briefcase, TrendingUp, UserPlus } from "lucide-react";
+import { Menu, X, LogIn, User, LogOut, Briefcase, TrendingUp, UserPlus, Users } from "lucide-react";
 import { useSession, signOut } from "next-auth/react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
@@ -118,6 +118,15 @@ export default function Navbar() {
                     >
                       <User className="w-4 h-4" />
                       My Dashboard
+                    </Link>
+
+                    <Link
+                      href="/contacts"
+                      onClick={() => setUserMenuOpen(false)}
+                      className="flex items-center gap-2 w-full px-3 py-2 text-xs font-medium text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800/50 rounded-lg transition-colors"
+                    >
+                      <Users className="w-4 h-4" />
+                      My Contacts
                     </Link>
 
                     {isEntrepreneur && (

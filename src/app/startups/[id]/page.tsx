@@ -2,6 +2,7 @@
 
 import { useParams, useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
+import { useSession } from "next-auth/react";
 import {
   ArrowLeft,
   MapPin,
@@ -18,6 +19,8 @@ import {
   Target,
   Lightbulb,
   Briefcase,
+  UserPlus,
+  Check,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -42,15 +45,19 @@ interface StartupDetail {
   stage: string;
   minimumInvestment: number;
   viewCount: number;
+  owner?: { _id: string; name: string; image?: string };
   recentInvestors: { name: string; image: string; amount: number; date: string }[];
 }
 
 export default function StartupDetailPage() {
   const params = useParams();
   const router = useRouter();
+  const { data: session } = useSession();
   const [startup, setStartup] = useState<StartupDetail | null>(null);
   const [loading, setLoading] = useState(true);
   const [notFound, setNotFound] = useState(false);
+  const [contactSaved, setContactSaved] = useState(false);
+  const [savingContact, setSavingContact] = useState(false);
 
   useEffect(() => {
     if (params.id) {
@@ -73,6 +80,33 @@ export default function StartupDetailPage() {
       setNotFound(true);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleSaveContact = async () => {
+    if (!startup?.owner?._id || !session) return;
+    setSavingContact(true);
+    try {
+      const res = await fetch("/api/contacts", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          contactUserId: startup.owner._id,
+          startupId: startup.id,
+          category: "entrepreneur",
+          note: `Founder of ${startup.name}`,
+        }),
+      });
+      if (res.status === 409) {
+        setContactSaved(true); // Already saved
+        return;
+      }
+      if (!res.ok) throw new Error();
+      setContactSaved(true);
+    } catch {
+      // silently fail
+    } finally {
+      setSavingContact(false);
     }
   };
 
@@ -339,6 +373,33 @@ export default function StartupDetailPage() {
                   Share
                 </button>
               </div>
+
+              {/* Save Contact */}
+              {session && startup.owner?._id && (session.user as any)?.id !== startup.owner._id && (
+                <button
+                  onClick={handleSaveContact}
+                  disabled={contactSaved || savingContact}
+                  className={`w-full mt-3 py-2.5 text-sm font-medium rounded-xl flex items-center justify-center gap-2 transition-all ${
+                    contactSaved
+                      ? "bg-emerald-100 dark:bg-emerald-900/30 text-emerald-700 dark:text-emerald-400 cursor-default"
+                      : "bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-indigo-50 dark:hover:bg-indigo-900/20 hover:text-indigo-600 dark:hover:text-indigo-400"
+                  }`}
+                >
+                  {savingContact ? (
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                  ) : contactSaved ? (
+                    <>
+                      <Check className="w-4 h-4" />
+                      Contact Saved
+                    </>
+                  ) : (
+                    <>
+                      <UserPlus className="w-4 h-4" />
+                      Save Founder Contact
+                    </>
+                  )}
+                </button>
+              )}
             </div>
 
             {/* Recent Investors */}

@@ -51,7 +51,7 @@ export const authOptions: NextAuthOptions = {
     async jwt({ token, user, trigger }) {
       if (user) {
         token.id = user.id;
-        token.roles = (user as any).roles || ['investor'];
+        token.roles = (user as any).roles || ['investor', 'entrepreneur'];
       }
       // On every session check, refresh the role from DB
       // This ensures role changes (e.g. promotions) take effect without re-login
@@ -68,7 +68,7 @@ export const authOptions: NextAuthOptions = {
             }
           }
           if (dbUser) {
-            token.roles = (dbUser as any).roles || ['investor'];
+            token.roles = (dbUser as any).roles || ['investor', 'entrepreneur'];
           }
         } catch {
           // Silently keep existing role if DB lookup fails
@@ -92,7 +92,7 @@ export const authOptions: NextAuthOptions = {
             name: user.name || "Unknown",
             email: user.email!,
             image: user.image || undefined,
-            roles: ["investor"],
+            roles: ["investor", "entrepreneur"],
           });
         }
         // Propagate MongoDB _id back so the jwt callback receives the correct ID
