@@ -90,7 +90,8 @@ export async function POST(req: NextRequest) {
     }
 
     await connectDB();
-    const userId = (session.user as any).id;
+    const user = session.user as any;
+    const userId = user.id;
     const body = await req.json();
 
     const { startupId, amount, message } = body;
@@ -99,15 +100,34 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Invalid input" }, { status: 400 });
     }
 
+    // Verify user has investor role
+    if (!user.roles?.includes("investor")) {
+      return NextResponse.json({ error: "Only investors can make investments" }, { status: 403 });
+    }
+
     // Verify startup exists and is approved
     const startup = await Startup.findById(startupId);
     if (!startup || startup.status !== "approved") {
       return NextResponse.json({ error: "Startup not available for investment" }, { status: 404 });
     }
 
+    // Prevent investing in own startup
+    if (startup.owner.toString() === userId) {
+      return NextResponse.json({ error: "You cannot invest in your own startup" }, { status: 403 });
+    }
+
     if (amount < startup.funding.minimumInvestment) {
       return NextResponse.json(
         { error: `Minimum investment is $${startup.funding.minimumInvestment}` },
+        { status: 400 }
+      );
+    }
+
+    // Prevent over-funding
+    const remaining = startup.funding.goal - (startup.funding.raised || 0);
+    if (remaining > 0 && amount > remaining) {
+      return NextResponse.json(
+        { error: `Maximum remaining amount is $${remaining.toLocaleString()}` },
         { status: 400 }
       );
     }
