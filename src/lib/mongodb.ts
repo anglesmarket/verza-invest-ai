@@ -1,5 +1,13 @@
 import mongoose from 'mongoose';
 
+let attachDatabasePool: ((client: any) => void) | null = null;
+try {
+  // Only available when deployed on Vercel
+  attachDatabasePool = require('@vercel/functions').attachDatabasePool;
+} catch {
+  // Not on Vercel — skip
+}
+
 const MONGODB_URI = process.env.MONGODB_URI;
 
 if (!MONGODB_URI) {
@@ -39,8 +47,13 @@ async function connectDB() {
       bufferCommands: false,
     };
 
-    cached.promise = mongoose.connect(MONGODB_URI!, opts).then((mongoose) => {
-      return mongoose;
+    cached.promise = mongoose.connect(MONGODB_URI!, opts).then((mongooseInstance) => {
+      // Attach the underlying MongoClient to Vercel's connection pool manager
+      // so connections are properly handled during function suspend/resume
+      if (attachDatabasePool) {
+        attachDatabasePool(mongooseInstance.connection.getClient());
+      }
+      return mongooseInstance;
     });
   }
 

@@ -10,12 +10,13 @@ export const dynamic = "force-dynamic";
 // GET /api/startups/[id] - Get single startup detail
 export async function GET(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     await connectDB();
+    const { id } = await params;
 
-    const startup = await Startup.findById(params.id)
+    const startup = await Startup.findById(id)
       .populate("owner", "name image")
       .lean();
 
@@ -48,7 +49,7 @@ export async function GET(
       .lean();
 
     // Increment view count
-    await Startup.findByIdAndUpdate(params.id, {
+    await Startup.findByIdAndUpdate(id, {
       $inc: { "metrics.viewCount": 1 },
     });
 
@@ -100,7 +101,7 @@ export async function GET(
 // PATCH /api/startups/[id] - Update a startup
 export async function PATCH(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -109,10 +110,11 @@ export async function PATCH(
     }
 
     await connectDB();
+    const { id } = await params;
     const user = session.user as any;
     const isAdmin = user.roles?.includes("admin");
 
-    const startup = await Startup.findById(params.id);
+    const startup = await Startup.findById(id);
     if (!startup) {
       return NextResponse.json({ error: "Startup not found" }, { status: 404 });
     }
@@ -166,7 +168,7 @@ export async function PATCH(
     }
 
     const updated = await Startup.findByIdAndUpdate(
-      params.id,
+      id,
       { $set: update },
       { new: true }
     )
@@ -206,7 +208,7 @@ export async function PATCH(
 // DELETE /api/startups/[id] - Delete a startup
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await getServerSession(authOptions);
@@ -215,10 +217,11 @@ export async function DELETE(
     }
 
     await connectDB();
+    const { id } = await params;
     const user = session.user as any;
     const isAdmin = user.roles?.includes("admin");
 
-    const startup = await Startup.findById(params.id);
+    const startup = await Startup.findById(id);
     if (!startup) {
       return NextResponse.json({ error: "Startup not found" }, { status: 404 });
     }
@@ -244,7 +247,7 @@ export async function DELETE(
       );
     }
 
-    await Startup.findByIdAndDelete(params.id);
+    await Startup.findByIdAndDelete(id);
 
     // Cancel any pending investments for this startup
     await Investment.updateMany(

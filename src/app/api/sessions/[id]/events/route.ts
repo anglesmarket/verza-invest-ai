@@ -3,8 +3,9 @@ import { sessionEventManager } from "@/lib/sessionEvents";
 
 export const dynamic = "force-dynamic";
 
-export async function GET(req: NextRequest, { params }: { params: { id: string } }) {
-  const sessionId = params.id;
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  const sessionId = id;
   
   const responseStream = new TransformStream();
   const writer = responseStream.writable.getWriter();

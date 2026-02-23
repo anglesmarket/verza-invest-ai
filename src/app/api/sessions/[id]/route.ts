@@ -8,10 +8,11 @@ import { sessionEventManager } from "@/lib/sessionEvents";
 import { siteEventManager } from '@/lib/siteEvents';
 
 // GET /api/sessions/[id] - Get participants
-export async function GET(req: Request, { params }: { params: { id: string } }) {
+export async function GET(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     await connectDB();
-    const sessionId = params.id;
+    const { id } = await params;
+    const sessionId = id;
 
     const sessionData = await Session.findOne({ sessionId, isActive: true })
       .populate("participants.user", "name _id email image")
@@ -35,7 +36,7 @@ export async function GET(req: Request, { params }: { params: { id: string } }) 
 }
 
 // POST /api/sessions/[id] - Join session
-export async function POST(req: Request, { params }: { params: { id: string } }) {
+export async function POST(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const userSession = await getServerSession(authOptions);
     if (!userSession?.user) {
@@ -44,7 +45,8 @@ export async function POST(req: Request, { params }: { params: { id: string } })
 
     const { isPublic } = await req.json().catch(() => ({ isPublic: true }));
     await connectDB();
-    const sessionId = params.id;
+    const { id } = await params;
+    const sessionId = id;
     const userId = (userSession.user as any).id;
 
     let session = await Session.findOne({ sessionId });
@@ -85,7 +87,7 @@ export async function POST(req: Request, { params }: { params: { id: string } })
 }
 
 // PATCH /api/sessions/[id] - Update session settings
-export async function PATCH(req: Request, { params }: { params: { id: string } }) {
+export async function PATCH(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const userSession = await getServerSession(authOptions);
     if (!userSession?.user) {
@@ -94,7 +96,8 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
 
     const { isPublic, currentTopicId, isActive } = await req.json();
     await connectDB();
-    const sessionId = params.id;
+    const { id } = await params;
+    const sessionId = id;
     const userId = (userSession.user as any)?.id;
 
     if (!userId) {
@@ -154,7 +157,7 @@ export async function PATCH(req: Request, { params }: { params: { id: string } }
 }
 
 // DELETE /api/sessions/[id] - Leave session
-export async function DELETE(req: Request, { params }: { params: { id: string } }) {
+export async function DELETE(req: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const userSession = await getServerSession(authOptions);
     if (!userSession?.user) {
@@ -162,7 +165,8 @@ export async function DELETE(req: Request, { params }: { params: { id: string } 
     }
 
     await connectDB();
-    const sessionId = params.id;
+    const { id } = await params;
+    const sessionId = id;
     const userId = (userSession.user as any).id;
 
     await Session.updateOne(
